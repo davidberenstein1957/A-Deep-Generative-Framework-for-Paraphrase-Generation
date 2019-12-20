@@ -1,19 +1,19 @@
 # coding: utf-8
-import keras
+import tensorflow.keras as keras
 import os
-from keras import backend as K
-from keras import objectives
-from keras.layers import Input, LSTM, Embedding, RepeatVector
-from keras.layers.core import Dense, Lambda
-from keras.layers.wrappers import TimeDistributed
-from keras.models import Model
-from keras.utils import plot_model
+from tensorflow.keras import backend as K
+#from tensorflow.keras import objectives
+from tensorflow.keras.layers import Input, LSTM, Embedding, RepeatVector
+from tensorflow.keras.layers import Dense, Lambda
+from tensorflow.keras.layers import TimeDistributed
+from tensorflow.keras.models import Model
+from tensorflow.keras.utils import plot_model
 import parameters as para
 import numpy as np
 #from pg_vae.glove_embedding import load_golve_embedding
 import parameters as para
 import tensorflow as tf
-import keras.losses as losses
+import tensorflow.keras.losses as losses
 import torch as t
 
 
@@ -143,7 +143,7 @@ def create_lstm_vae():
    
     #定义损失函数
     def vae_loss(y, y_predict):
-        xent_loss = objectives.categorical_crossentropy(y, y_predict)        
+        xent_loss = losses.categorical_crossentropy(y, y_predict)        
         loss = 79 * xent_loss + alpha * kld
         return loss
     #生成模型
