@@ -70,6 +70,28 @@ def create_bigDecoder():
     encoder3 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder3")
     _, h, c = encoder3(x_o_3)
 
+    vae_z = Input(shape=(None,para.hzy_vae_dense_dim), name="encoder_z")#《句子，词，hzy_lstm_dim维》？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
+    x_p_4 = Input(shape=(None,para.hzy_token_embedding), name="x_p_4") #《句子，词，token_embedding》
+
+    decoder4 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="decoder4")
+    dec_concate =keras.layers.concatenate( [x_p_4, vae_z], axis=-1)     
+   
+    decode_y, h1, c1= decoder4(dec_concate, initial_state=[h, c]) #送进去的是《句子，词，token_embedding+z的hzy_lstm_dim维》》
+    
+    #这里应该把解码结果拉成二维，然后再变回三维?????????????????????????????????????????????????????????????????????????????????
+    dec_dense_layer = Dense(para.hzy_xp_word_vocab_size,activation="softmax", name="dec_dense_layer") 
+    final_y=dec_dense_layer(decode_y)    
+    bigDecoder = Model([x_o_3, x_p_4, vae_z], [final_y],name="bigDecoder")
+    return bigDecoder,decoder4,encoder3
+
+
+# 2--2 定义整个解码端
+def create_bigDecoder_1():
+    x_o_3 = Input(shape=(None, para.hzy_token_embedding), name="x_o_3")#《句子，词，token_embedding》
+    # 定义decoder端的编码器端
+    encoder3 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder3")
+    _, h, c = encoder3(x_o_3)
+
     decoder4 = create_decoder4()
     x_p_4 = Input(shape=(None, para.hzy_token_embedding), name="x_p_4")#《句子，词，token_embedding》
     vae_z = Input(shape=(None,para.hzy_vae_dense_dim), name="z_from_encode")  #《句子，词，z para.hzy_lstm_dim》 
@@ -138,7 +160,7 @@ def create_lstm_vae():
     #vae_z=RepeatVector(para.time_steps)(vae_z)
     
     #解码
-    bigDecoder,decoder4,encoder3 =create_bigDecoder()
+    bigDecoder,decoder4,encoder3 =create_bigDecoder_1()
     final_y=bigDecoder([x_o_3, x_p_4, vae_z])
    
     #定义损失函数
