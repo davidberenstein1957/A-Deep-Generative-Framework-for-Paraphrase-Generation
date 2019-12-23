@@ -8,7 +8,7 @@ from embedding import Embedding as Embedding
 from torch.autograd import Variable
 import tensorflow as tf
 import numpy as np
-
+#指定使用的gpu
 if __name__ == "__main__":
     if not os.path.exists(path+"data/word_embeddings.npy"):
         raise FileNotFoundError("word embeddings file was't found")
