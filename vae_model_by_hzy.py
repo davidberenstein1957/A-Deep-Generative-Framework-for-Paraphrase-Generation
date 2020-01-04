@@ -92,10 +92,21 @@ def create_bigDecoder_1():
     encoder3 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder3")
     _, h, c = encoder3(x_o_3)
 
-    decoder4 = create_decoder4()
+
     x_p_4 = Input(shape=(None, para.hzy_token_embedding), name="x_p_4")#《句子，词，token_embedding》
     vae_z = Input(shape=(None,para.hzy_vae_dense_dim), name="z_from_encode")  #《句子，词，z para.hzy_lstm_dim》 
-    final_y, _, _ = decoder4([h, c, vae_z, x_p_4])
+
+   
+    
+    decoder4 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="decoder4")
+    dec_concate =keras.layers.concatenate( [x_p_4, vae_z], axis=-1)    
+    
+    decode_y, h1, c1= decoder4(dec_concate, initial_state=[h, c]) #送进去的是《句子，词，token_embedding+z的hzy_lstm_dim维》》
+    
+    #这里应该把解码结果拉成二维，然后再变回三维?????????????????????????????????????????????????????????????????????????????????
+    dec_dense_layer = Dense(para.hzy_xp_word_vocab_size,activation="softmax", name="dec_dense_layer") 
+    final_y=dec_dense_layer(decode_y)
+   
     bigDecoder = Model([x_o_3, x_p_4, vae_z], [final_y],name="bigDecoder")
     return bigDecoder,decoder4,encoder3
 
@@ -179,8 +190,81 @@ def create_lstm_vae():
     bigEncoder.summary()
     bigDecoder.summary()
     decoder4.summary()
-    plot_model(vae, to_file='/home/hzy/Desktop/vae.png')
-    plot_model(bigEncoder, to_file='/home/hzy/Desktop/bigEncoder.png')
-    plot_model(bigDecoder, to_file='/home/hzy/Desktop/bigDecoder.png')
-    plot_model(decoder4, to_file='/home/hzy/Desktop/decoder4.png')
+    #plot_model(vae, to_file='d:/temp/vae.png')
+    #plot_model(bigEncoder, to_file='/home/hzy/Desktop/bigEncoder.png')
+    #plot_model(bigDecoder, to_file='/home/hzy/Desktop/bigDecoder.png')
+    #plot_model(decoder4, to_file='/home/hzy/Desktop/decoder4.png')
+    return vae, bigDecoder, decoder4
+
+
+
+def create_lstm_vae_1():
+
+    # 4  定义整个VAE
+	#定义输入
+    X_o_1 = Input(shape=(None, para.hzy_token_embedding), name="X_o_1")
+    X_p_2 = Input(shape=(None, para.hzy_token_embedding), name="X_p_2")
+    x_o_3 = Input(shape=(None, para.hzy_token_embedding), name="x_o_3")
+    x_p_4 = Input(shape=(None, para.hzy_token_embedding), name="x_p_4")
+    random_z=Input(shape=(None,para.hzy_vae_dense_dim),name="random_z") #???????
+    alpha =Input(shape=(None,1), name="alpha")
+
+    #编码
+    encoder1 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder1") #LSTM中间编码的维度，这里是
+    encoder2 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder2") 
+    _, h, c = encoder1(X_o_1) 
+    encoder_z, _, _ = encoder2(X_p_2, initial_state=[h, c])
+
+    #生成z
+    context_to_mu = Dense(units=para.hzy_vae_dense_dim,name="Lstm_Layer_z_mean")
+    context_to_logvar = Dense(units=para.hzy_vae_dense_dim,name="Lstm_Layer_z_log_sigma")  
+    mu = context_to_mu(encoder_z)
+    logvar = context_to_logvar(encoder_z)
+    def get_z(x):
+        mu1,logvar1=x
+        std =keras.backend.exp(0.5 * logvar1)           
+        z2 = random_z#keras.backend.random_normal(shape=(para.time_steps, para.latent_dim), mean=0., stddev=1.0)
+        z3 = z2 * std + mu1
+        return z3
+    vae_z = keras.layers.Lambda(get_z, output_shape=(para.hzy_vae_dense_dim,), name="Lambda_Layer_sampling_z")([mu, logvar])
+
+
+    def compute_kl_loss(x):
+        mu1,logvar1=x
+        kl_loss1 = - 0.5 * K.mean(1 + logvar1 - K.square(mu1) - K.exp(logvar1))
+        return kl_loss1
+    kld=keras.layers.Lambda(compute_kl_loss,output_shape=(para.hzy_vae_dense_dim,), name="compute_kl_loss")([mu, logvar])
+    
+    #解码
+    encoder3 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="encoder3")
+    _, h, c = encoder3(x_o_3)
+    decoder4 = LSTM(para.hzy_lstm_dim, return_sequences=True,return_state=True, name="decoder4")
+    dec_concate =keras.layers.concatenate( [x_p_4, vae_z], axis=-1)    
+    decode_y, _, _= decoder4(dec_concate, initial_state=[h, c]) #送进去的是《句子，词，token_embedding+z的hzy_lstm_dim维》》
+    
+    #这里应该把解码结果拉成二维，然后再变回三维?????????????????????????????????????????????????????????????????????????????????
+    dec_dense_layer = Dense(units=para.hzy_xp_word_vocab_size,activation="softmax", name="dec_dense_layer222") 
+    final_y=dec_dense_layer(decode_y)
+   
+    #定义损失函数
+    def vae_loss(y, y_predict):
+        xent_loss = losses.categorical_crossentropy(y, y_predict)        
+        #loss1 = 79 * xent_loss + alpha * kld
+        return xent_loss
+    #生成模型
+    vae=Model([X_o_1,X_p_2,x_o_3,x_p_4,alpha,random_z],final_y,name="VAE_G") 
+
+    vae.compile(optimizer="adam", loss=vae_loss, metrics=["accuracy"])
+    #bigEncoder.compile(optimizer="adam", loss=vae_loss, metrics=["accuracy"])
+    bigDecoder=None
+   # bigDecoder.compile(optimizer="adam", loss=vae_loss, metrics=["accuracy"])
+#    decoder4.compile(optimizer="adam", loss=vae_loss, metrics=["accuracy"])
+    vae.summary()
+    #bigEncoder.summary()
+    #bigDecoder.summary()
+  #  decoder4.summary()
+    #plot_model(vae, to_file='d:/temp/vae.png')
+    #plot_model(bigEncoder, to_file='/home/hzy/Desktop/bigEncoder.png')
+    #plot_model(bigDecoder, to_file='/home/hzy/Desktop/bigDecoder.png')
+    #plot_model(decoder4, to_file='/home/hzy/Desktop/decoder4.png')
     return vae, bigDecoder, decoder4
