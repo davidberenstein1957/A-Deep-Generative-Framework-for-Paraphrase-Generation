@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 class para:
     def __init__(self, max_word_len, max_seq_len, word_vocab_size, char_vocab_size):
         #     max_word_length,max_sentence_length, 
@@ -46,4 +47,4 @@ latent_variable_size = 1100
 decoder_rnn_size = 600
 decoder_num_layers = 2
 
-path="/home/hzy/Desktop/source/1/load_embedding/1130model/"
+path="D:/Dropbox/temp/1130model/"
