@@ -10,6 +10,8 @@ from embedding import Embedding as Embedding
 from torch.autograd import Variable
 import tensorflow as tf
 import numpy as np
+tf.compat.v1.enable_eager_execution()
+
 #指定使用的gpu
 if __name__ == "__main__":
     if not os.path.exists(path+"data/word_embeddings.npy"):
@@ -118,17 +120,24 @@ if __name__ == "__main__":
         #这里又几个变量 encoder_input 相当于x_o_1,x_o_3, encoder_input_2 相当于x_p_2,x_p_4
 
 
-        print(encoder_input)
-        print(encoder_input.data)
+       # print(encoder_input.numpy())
+        print(tf.convert_to_tensor(encoder_input.data.numpy()))
+
         
+        print("转化成功------------------------------------------------------------------------------------------")
 
-        [X_o_1,X_p_2,x_o_3,x_p_4]=[tf.convert_to_tensor(encoder_input.data),tf.convert_to_tensor(encoder_input_2.data),tf.convert_to_tensor(encoder_input.data),tf.convert_to_tensor(encoder_input_2.data)]
-        XXX=np.array( tf.ones(shape=(32,25,825)))
-        alpha=np.array(tf.ones(shape=(32,25,1)))  
-        z=np.array(tf.ones(shape=(32,25,600)) )
+        # [X_o_1,X_p_2,x_o_3,x_p_4]=[tf.convert_to_tensor(encoder_input.data.numpy()),tf.convert_to_tensor(encoder_input_2.data.numpy()),
+        #        tf.convert_to_tensor(encoder_input.data.numpy()),tf.convert_to_tensor(encoder_input_2.data.numpy())]
+        X_o_1=encoder_input.data.numpy()
+        X_p_2=encoder_input_2.data.numpy()
+        x_o_3=encoder_input.data.numpy()
+        x_p_4=encoder_input_2.data.numpy()
+        XXX= tf.ones(shape=(32,25,825))
+        alpha=tf.ones(shape=(32,25,1))
+        z=tf.ones(shape=(32,25,600))
 
-        vae.train_on_batch([X_o_1,X_p_2,x_o_3,x_p_4,alpha,z],x_p_4)
-       # vae.train_on_batch([XXX,XXX,XXX,XXX,alpha,z],XXX)
+        #vae.train_on_batch([X_o_1,X_p_2,x_o_3,x_p_4,alpha,z],x_p_4)
+        vae.train_on_batch([XXX,XXX,XXX,XXX,alpha,z],XXX)
 
         print("xunlian")
 

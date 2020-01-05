@@ -11,15 +11,16 @@ from tensorflow.keras import backend as K
 
 
 
+
+
+
+
 # LSTMLayer=Sequential()
 # LSTMLayer.add(LSTM(para.decoder_rnn_size, return_sequences=True,return_state=True, name="decoder4"))
 # LSTMLayer.add(LSTM(para.decoder_rnn_size, return_sequences=True,return_state=True, name="decoder4"))
-vae,bigdecoder,docoder4=VAE.create_lstm_vae()
+vae,bigdecoder,docoder4=VAE.create_lstm_vae_1()
 alpha=(tf.ones(shape=(32,25,1)))  
-
-
 random_z=tf.convert_to_tensor(tf.ones(shape=(32,25,600)) *1.0)
-
 x=tf.ones(shape=(32,25,825))
 y=tf.ones(shape=(32,25,825))
 

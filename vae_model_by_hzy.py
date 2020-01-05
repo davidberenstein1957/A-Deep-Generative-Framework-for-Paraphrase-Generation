@@ -15,6 +15,7 @@ import parameters as para
 import tensorflow as tf
 import tensorflow.keras.losses as losses
 import torch as t
+tf.enable_eager_execution()
 
 
 #############################################################################################################################################################
