@@ -6,7 +6,7 @@ import re
 
 import numpy as np
 from six.moves import cPickle
-
+import sys
 from .functional import *
 
 
@@ -168,7 +168,7 @@ class BatchLoader:
         return words_vocab_size, idx_to_word, word_to_idx
 
     def preprocess(self, data_files, idx_files, tensor_files):
-
+        sys.setdefaultencoding("utf-8")
         data = [open(file, "r").read() for file in data_files]
         merged_data = data[0] + '\n' + data[1] #train和test的xo合并到一起
 
@@ -203,7 +203,7 @@ class BatchLoader:
 
     def load_preprocessed(self, data_files, idx_files, tensor_files):
 
-        data = [open(file, "r",encoding="utf-8").read() for file in data_files]
+        data = [open(file, "r").read() for file in data_files]
         data_words = [[line.split() for line in target.split('\n')] for target in data]
         self.max_seq_len = np.amax([len(line) for target in data_words for line in target])
         self.num_lines = [len(target) for target in data_words]

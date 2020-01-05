@@ -1,3 +1,5 @@
+
+
 from utils.batch_loader import BatchLoader
 import argparse
 import os
@@ -19,7 +21,7 @@ if __name__ == "__main__":
         parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
                             help='batch size (default: 32)')
         parser.add_argument('--use-cuda', type=bool, default=True, metavar='CUDA',
-                            help='use cuda (default: True)')
+                            help='use cuda (default: False)')
         parser.add_argument('--learning-rate', type=float, default=0.00005, metavar='LR',
                             help='learning rate (default: 0.00005)')
         parser.add_argument('--dropout', type=float, default=0.3, metavar='DR',
@@ -75,7 +77,7 @@ if __name__ == "__main__":
         '''
     embedding = Embedding(parameters, path)
     embedding_2 = Embedding(parameters_2, path,True)
-    vae,bigdecoder,docoder4=VAE.create_lstm_vae()
+    vae,bigdecoder,docoder4=VAE.create_lstm_vae_1()
     start_index = 0
     for iteration in range(args.num_iterations):
         if True:
@@ -86,7 +88,7 @@ if __name__ == "__main__":
             input = batch_loader.next_batch(args.batch_size, 'train', start_index)
             input = [Variable(t.from_numpy(var)) for var in input]
             input = [var.long() for var in input]
-            input = [var.cuda() if args.use_cuda else var for var in input]
+            #input = [var.cuda() if args.use_cuda else var for var in input]
             #这里是data/train.txt,转换变成embedding，用pand补齐， 
             #其中encoder_word_input, encoder_character_input是将 xo原始句输入倒过来前面加若干占位符， 
             # decoder_word_input, decoder_character_input是 xo原始句加了开始符号末端补齐
@@ -98,7 +100,7 @@ if __name__ == "__main__":
             input_2 = batch_loader_2.next_batch(args.batch_size, 'train', start_index)
             input_2 = [Variable(t.from_numpy(var)) for var in input_2]
             input_2 = [var.long() for var in input_2]
-            input_2 = [var.cuda() if args.use_cuda else var for var in input_2]           
+            #input_2 = [var.cuda() if args.use_cuda else var for var in input_2]           
             #这里是data/super/train.txt,转换变成embedding，用pand补齐， 
             #其中encoder_word_input_2, encoder_character_input_2是将 释义句xp输入倒过来前面加若干占位符， 
             # decoder_word_input_2, decoder_character_input是 释义句xp加了开始符号末端补齐
@@ -114,11 +116,19 @@ if __name__ == "__main__":
         encoder_input_2 = embedding_2(encoder_word_input_2, encoder_character_input_2)
 
         #这里又几个变量 encoder_input 相当于x_o_1,x_o_3, encoder_input_2 相当于x_p_2,x_p_4
+
+
+        print(encoder_input)
+        print(encoder_input.data)
+        
+
         [X_o_1,X_p_2,x_o_3,x_p_4]=[tf.convert_to_tensor(encoder_input.data),tf.convert_to_tensor(encoder_input_2.data),tf.convert_to_tensor(encoder_input.data),tf.convert_to_tensor(encoder_input_2.data)]
-        alpha=(tf.ones(shape=(32,25,1)))  
-        z=tf.ones(shape=(32,25,600)) 
+        XXX=np.array( tf.ones(shape=(32,25,825)))
+        alpha=np.array(tf.ones(shape=(32,25,1)))  
+        z=np.array(tf.ones(shape=(32,25,600)) )
 
         vae.train_on_batch([X_o_1,X_p_2,x_o_3,x_p_4,alpha,z],x_p_4)
+       # vae.train_on_batch([XXX,XXX,XXX,XXX,alpha,z],XXX)
 
         print("xunlian")
 
